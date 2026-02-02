@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'docker-host' }
+  agent any
 
   environment {
     DOCKER_USER = "darninidhi2122"
