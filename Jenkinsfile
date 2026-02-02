@@ -1,98 +1,101 @@
 pipeline {
-  agent any
+  agent { label 'docker-host' }
 
   environment {
-    DOCKERHUB_USER = "darninidhi2122"
-    TAG = ""
-    NAMESPACE = ""
+    DOCKER_USER = "darninidhi2122"
+    DOCKER_CRED = "dockerhub-creds"
+
+    FRONTEND_IMAGE = "kubecoin-frontend"
+    BACKEND_IMAGE  = "kubecoin-backend"
+
+    IMAGE_TAG = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+  }
+
+  triggers {
+    githubPush()
   }
 
   stages {
 
-    /* -----------------------------
-       Detect Environment from Branch
-       ----------------------------- */
-    stage('Detect Environment') {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Set Environment Namespace') {
       steps {
         script {
-          if (env.BRANCH_NAME == 'dev') {
-            env.TAG = 'dev'
-            env.NAMESPACE = 'dev'
-          }
-          else if (env.BRANCH_NAME == 'test') {
-            env.TAG = 'testing'
-            env.NAMESPACE = 'testing'
-          }
-          else if (env.BRANCH_NAME == 'main') {
-            env.TAG = 'production'
-            env.NAMESPACE = 'production'
-          }
-          else {
-            error "Unsupported branch: ${env.BRANCH_NAME}. Allowed branches: dev, test, main"
+          if (env.BRANCH_NAME == 'prod') {
+            env.K8S_NAMESPACE = 'production'
+          } else if (env.BRANCH_NAME == 'dev') {
+            env.K8S_NAMESPACE = 'dev'
+          } else if (env.BRANCH_NAME == 'test') {
+            env.K8S_NAMESPACE = 'testing'
+          } else {
+            error "Unsupported branch: ${env.BRANCH_NAME}"
           }
         }
       }
     }
 
-    /* -----------------------------
-       Build Docker Images
-       ----------------------------- */
+    stage('Docker Login') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: DOCKER_CRED,
+          usernameVariable: 'DOCKER_USERNAME',
+          passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+          sh '''
+            echo "$DOCKER_PASSWORD" | docker login \
+              -u "$DOCKER_USERNAME" --password-stdin
+          '''
+        }
+      }
+    }
+
     stage('Build Docker Images') {
       steps {
         sh """
-        echo "Building images for environment: ${env.TAG}"
-
-        docker build -t ${DOCKERHUB_USER}/kubecoin-frontend:${env.TAG} frontend/
-        docker build -t ${DOCKERHUB_USER}/kubecoin-backend:${env.TAG} backend/
+          docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG frontend/
+          docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG backend/
         """
       }
     }
 
-    /* -----------------------------
-       Push Images to Docker Hub
-       ----------------------------- */
-    stage('Push Images to DockerHub') {
+    stage('Push Docker Images') {
       steps {
-        withCredentials([usernamePassword(
-          credentialsId: 'dockerhub-creds',
-          usernameVariable: 'DOCKER_USER',
-          passwordVariable: 'DOCKER_PASS'
-        )]) {
-          sh """
-          echo "Logging in to Docker Hub"
-          echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
-
-          echo "Pushing images"
-          docker push ${DOCKERHUB_USER}/kubecoin-frontend:${env.TAG}
-          docker push ${DOCKERHUB_USER}/kubecoin-backend:${env.TAG}
-          """
-        }
+        sh """
+          docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG
+          docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG
+        """
       }
     }
 
-    /* -----------------------------
-       Deploy to Kubernetes
-       ----------------------------- */
+    stage('Approve Production') {
+      when { branch 'main' }
+      steps {
+        input message: "Approve deployment of ${IMAGE_TAG} to PRODUCTION?"
+      }
+    }
+
     stage('Deploy to Kubernetes') {
       steps {
         sh """
-        echo "Deploying to namespace: ${env.NAMESPACE}"
+        kubectl apply -f k8s/${K8S_NAMESPACE}/
 
-        kubectl apply -f assignemnt/${env.TAG}/ -n ${env.NAMESPACE}
+      kubectl set image deployment/frontend \
+        frontend=$DOCKER_USER/kubecoin-frontend:$IMAGE_TAG \
+        -n ${K8S_NAMESPACE}
+
+      kubectl set image deployment/backend \
+        backend=$DOCKER_USER/kubecoin-backend:$IMAGE_TAG \
+        -n ${K8S_NAMESPACE}
+
+      kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}
+      kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}
         """
       }
-    }
-  }
-
-  /* -----------------------------
-     Post Actions
-     ----------------------------- */
-  post {
-    success {
-      echo "Pipeline completed successfully for branch: ${env.BRANCH_NAME}"
-    }
-    failure {
-      echo "Pipeline failed for branch: ${env.BRANCH_NAME}"
     }
   }
 }
