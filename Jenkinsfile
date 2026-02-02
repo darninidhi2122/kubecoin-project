@@ -13,14 +13,14 @@ pipeline {
       steps {
         script {
           if (env.BRANCH_NAME == 'dev') {
-            TAG = 'dev'
-            NAMESPACE = 'dev'
+            env.TAG = 'dev'
+            env.NAMESPACE = 'dev'
           } else if (env.BRANCH_NAME == 'test') {
-            TAG = 'testing'
-            NAMESPACE = 'testing'
+            env.TAG = 'testing'
+            env.NAMESPACE = 'testing'
           } else if (env.BRANCH_NAME == 'prod') {
-            TAG = 'production'
-            NAMESPACE = 'production'
+            env.TAG = 'production'
+            env.NAMESPACE = 'production'
           }
         }
       }
@@ -31,7 +31,9 @@ pipeline {
         sh """
         docker build -t $DOCKERHUB_USER/kubecoin-frontend:$TAG frontend/
         docker build -t $DOCKERHUB_USER/kubecoin-backend:$TAG backend/
-        docker build -t $DOCKERHUB_USER/postgres:$TAG database/
+        
+        docker pull postgres:18.1-alpine
+        docker tag postgres:18.1-alpine darninidhi2122/postgres:${TAG}
         """
       }
     }
@@ -45,9 +47,9 @@ pipeline {
         )]) {
           sh """
           docker login -u $USER -p $PASS
-          docker push $DOCKERHUB_USER/kubecoin-frontend:$TAG
-          docker push $DOCKERHUB_USER/kubecoin-backend:$TAG
-          docker push $DOCKERHUB_USER/postgres:$TAG
+          docker push $DOCKERHUB_USER/kubecoin-frontend:${TAG}
+          docker push $DOCKERHUB_USER/kubecoin-backend:${TAG}
+          docker push $DOCKERHUB_USER/postgres:${TAG}
           """
         }
       }
