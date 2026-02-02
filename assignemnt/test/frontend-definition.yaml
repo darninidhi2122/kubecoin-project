@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: test
+  namespace: testing
   labels:
     module: frontend
 spec:
@@ -18,9 +18,9 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: artisantek/kubecoin-frontend:1.0
+          image: darninidhi2122/kubecoin-frontend:testing
           ports:
             - containerPort: 8080
           env:
             - name: BACKEND_URL
-              value: "http://backend-svc.test.svc.cluster.local:5000"
+              value: "http://backend-svc.testing.svc.cluster.local:5000"

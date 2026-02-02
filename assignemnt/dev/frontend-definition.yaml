@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: artisantek/kubecoin-frontend:1.0
+          image: darninidhi2122/kubecoin-frontend:dev
           ports:
             - containerPort: 8080
           env:

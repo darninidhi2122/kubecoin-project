@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: test
+  namespace: testing
 spec:
   replicas: 1
   selector:
@@ -32,7 +32,7 @@ spec:
 
       containers:
         - name: backend
-          image: artisantek/kubecoin-backend:1.0
+          image: darninidhi2122/kubecoin-backend:testing
           ports:
             - containerPort: 5000
           env:
