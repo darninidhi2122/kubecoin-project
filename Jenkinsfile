@@ -31,9 +31,6 @@ pipeline {
         sh """
         docker build -t $DOCKERHUB_USER/kubecoin-frontend:$TAG frontend/
         docker build -t $DOCKERHUB_USER/kubecoin-backend:$TAG backend/
-        
-        docker pull postgres:18.1-alpine
-        docker tag postgres:18.1-alpine darninidhi2122/postgres:${TAG}
         """
       }
     }
@@ -49,7 +46,6 @@ pipeline {
           docker login -u $USER -p $PASS
           docker push $DOCKERHUB_USER/kubecoin-frontend:${TAG}
           docker push $DOCKERHUB_USER/kubecoin-backend:${TAG}
-          docker push $DOCKERHUB_USER/postgres:${TAG}
           """
         }
       }
