@@ -23,12 +23,12 @@ pipeline {
             env.TAG = 'testing'
             env.NAMESPACE = 'testing'
           }
-          else if (env.BRANCH_NAME == 'main') {
+          else if (env.BRANCH_NAME == 'prod') {
             env.TAG = 'production'
             env.NAMESPACE = 'production'
           }
           else {
-            error "Unsupported branch: ${env.BRANCH_NAME}. Use dev, test, or prod only."
+            error "Unsupported branch: ${env.BRANCH_NAME}. Allowed: dev, test, main"
           }
         }
       }
@@ -60,7 +60,7 @@ pipeline {
         )]) {
           sh """
           echo "Logging in to Docker Hub"
-          docker login -u $DOCKER_USER -p $DOCKER_PASS
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
           echo "Pushing images"
           docker push ${DOCKERHUB_USER}/kubecoin-frontend:${env.TAG}
@@ -89,10 +89,10 @@ pipeline {
      ----------------------------- */
   post {
     success {
-      echo "Pipeline completed successfully for ${env.BRANCH_NAME}"
+      echo "Pipeline completed successfully for branch: ${env.BRANCH_NAME}"
     }
     failure {
-      echo "Pipeline failed for ${env.BRANCH_NAME}"
+      echo "Pipeline failed for branch: ${env.BRANCH_NAME}"
     }
   }
 }
