@@ -12,13 +12,13 @@ pipeline {
     stage('Detect Environment') {
       steps {
         script {
-          if (env.BRANCH_NAME == 'DEV') {
+          if (env.BRANCH_NAME == 'dev') {
             TAG = 'dev'
             NAMESPACE = 'dev'
-          } else if (env.BRANCH_NAME == 'TESTING') {
+          } else if (env.BRANCH_NAME == 'test') {
             TAG = 'testing'
             NAMESPACE = 'testing'
-          } else if (env.BRANCH_NAME == 'PRODUCTION') {
+          } else if (env.BRANCH_NAME == 'prod') {
             TAG = 'production'
             NAMESPACE = 'production'
           }
