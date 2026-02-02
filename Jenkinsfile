@@ -23,8 +23,8 @@ pipeline {
             env.TAG = 'testing'
             env.NAMESPACE = 'testing'
           }
-          else if (env.BRANCH_NAME == 'prod') {
-            env.TAG = 'prod'
+          else if (env.BRANCH_NAME == 'main') {
+            env.TAG = 'production'
             env.NAMESPACE = 'production'
           }
           else {
