@@ -82,7 +82,7 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         sh """
-        kubectl apply -f k8s/${K8S_NAMESPACE}/
+        kubectl apply -f assignemnt/${K8S_NAMESPACE}/
 
       kubectl set image deployment/frontend \
         frontend=$DOCKER_USER/kubecoin-frontend:$IMAGE_TAG \
