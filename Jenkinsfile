@@ -78,7 +78,7 @@ pipeline {
         sh """
         echo "Deploying to namespace: ${env.NAMESPACE}"
 
-        kubectl apply -f assignment/${env.TAG}/ -n ${env.NAMESPACE}
+        kubectl apply -f assignment/${env.TAG}/
         """
       }
     }
