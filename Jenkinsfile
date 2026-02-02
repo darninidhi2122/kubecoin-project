@@ -31,7 +31,7 @@ pipeline {
         sh """
         docker build -t $DOCKERHUB_USER/kubecoin-frontend:$TAG frontend/
         docker build -t $DOCKERHUB_USER/kubecoin-backend:$TAG backend/
-        docker build -t $DOCKERHUB_USER/kubecoin-db:$TAG database/
+        docker build -t $DOCKERHUB_USER/postgres:$TAG database/
         """
       }
     }
@@ -47,7 +47,7 @@ pipeline {
           docker login -u $USER -p $PASS
           docker push $DOCKERHUB_USER/kubecoin-frontend:$TAG
           docker push $DOCKERHUB_USER/kubecoin-backend:$TAG
-          docker push $DOCKERHUB_USER/kubecoin-db:$TAG
+          docker push $DOCKERHUB_USER/postgres:$TAG
           """
         }
       }
@@ -56,7 +56,7 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         sh """
-        kubectl apply -f k8s/$TAG/ -n $NAMESPACE
+        kubectl apply -f assignment/$TAG/ -n $NAMESPACE
         """
       }
     }
