@@ -2,26 +2,54 @@ pipeline {
   agent any
 
   environment {
-    DOCKERHUB_USER = "darninidhi2122"
-    TAG = ""
-    NAMESPACE = ""
+    DOCKER_USER = "darninidhi2122"
+    DOCKER_CRED = "dockerhub-creds"
+
+    FRONTEND_IMAGE = "kubecoin-frontend"
+    BACKEND_IMAGE  = "kubecoin-backend"
+
+    IMAGE_TAG = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
+  }
+
+  triggers {
+    githubPush()
   }
 
   stages {
 
-    stage('Detect Environment') {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Set Environment Namespace') {
       steps {
         script {
-          if (env.BRANCH_NAME == 'dev') {
-            TAG = 'dev'
-            NAMESPACE = 'dev'
+          if (env.BRANCH_NAME == 'prod') {
+            env.K8S_NAMESPACE = 'production'
+          } else if (env.BRANCH_NAME == 'dev') {
+            env.K8S_NAMESPACE = 'dev'
           } else if (env.BRANCH_NAME == 'test') {
-            TAG = 'testing'
-            NAMESPACE = 'testing'
-          } else if (env.BRANCH_NAME == 'prod') {
-            TAG = 'production'
-            NAMESPACE = 'production'
+            env.K8S_NAMESPACE = 'testing'
+          } else {
+            error "Unsupported branch: ${env.BRANCH_NAME}"
           }
+        }
+      }
+    }
+
+    stage('Docker Login') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: DOCKER_CRED,
+          usernameVariable: 'DOCKER_USERNAME',
+          passwordVariable: 'DOCKER_PASSWORD'
+        )]) {
+          sh '''
+            echo "$DOCKER_PASSWORD" | docker login \
+              -u "$DOCKER_USERNAME" --password-stdin
+          '''
         }
       }
     }
@@ -29,34 +57,43 @@ pipeline {
     stage('Build Docker Images') {
       steps {
         sh """
-        docker build -t $DOCKERHUB_USER/kubecoin-frontend:$TAG frontend/
-        docker build -t $DOCKERHUB_USER/kubecoin-backend:$TAG backend/
-        docker build -t $DOCKERHUB_USER/postgres:$TAG database/
+          docker build -t $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG frontend/
+          docker build -t $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG backend/
         """
       }
     }
 
-    stage('Push Images to DockerHub') {
+    stage('Push Docker Images') {
       steps {
-        withCredentials([usernamePassword(
-          credentialsId: 'dockerhub-creds',
-          usernameVariable: 'USER',
-          passwordVariable: 'PASS'
-        )]) {
-          sh """
-          docker login -u $USER -p $PASS
-          docker push $DOCKERHUB_USER/kubecoin-frontend:$TAG
-          docker push $DOCKERHUB_USER/kubecoin-backend:$TAG
-          docker push $DOCKERHUB_USER/postgres:$TAG
-          """
-        }
+        sh """
+          docker push $DOCKER_USER/$FRONTEND_IMAGE:$IMAGE_TAG
+          docker push $DOCKER_USER/$BACKEND_IMAGE:$IMAGE_TAG
+        """
+      }
+    }
+
+    stage('Approve Production') {
+      when { branch 'main' }
+      steps {
+        input message: "Approve deployment of ${IMAGE_TAG} to PRODUCTION?"
       }
     }
 
     stage('Deploy to Kubernetes') {
       steps {
         sh """
-        kubectl apply -f assignment/$TAG/ -n $NAMESPACE
+        kubectl apply -f assignemnt/${K8S_NAMESPACE}/
+
+      kubectl set image deployment/frontend \
+        frontend=$DOCKER_USER/kubecoin-frontend:$IMAGE_TAG \
+        -n ${K8S_NAMESPACE}
+
+      kubectl set image deployment/backend \
+        backend=$DOCKER_USER/kubecoin-backend:$IMAGE_TAG \
+        -n ${K8S_NAMESPACE}
+
+      kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}
+      kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}
         """
       }
     }
