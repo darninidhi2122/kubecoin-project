@@ -73,7 +73,7 @@ pipeline {
     }
 
     stage('Approve Production') {
-      when { branch 'main' }
+      when { branch 'prod' }
       steps {
         input message: "Approve deployment of ${IMAGE_TAG} to PRODUCTION?"
       }
