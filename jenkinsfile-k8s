@@ -1,0 +1,74 @@
+pipeline {
+  agent {
+    label 'k8s-agent'
+  }
+
+  stages {
+
+    stage('Checkout Code') {
+      steps {
+        git branch: 'main',
+            url: 'https://github.com/darninidhi2122/kubecoin-project.git'
+      }
+    }
+
+    stage('Check Cluster Access') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl get nodes
+          kubectl get pods
+          '''
+        }
+      }
+    }
+
+    stage('Deploy Database') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-pv.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-pvc.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-init-configmap.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-headless-service.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-statefulset.yaml
+          '''
+        }
+      }
+    }
+
+    stage('Deploy Backend') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl apply -f k8s/level-3-configmaps-secrets/backend-deployment.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/backend-service.yaml
+          '''
+        }
+      }
+    }
+
+    stage('Deploy Frontend') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl apply -f k8s/level-3-configmaps-secrets/frontend-deployment.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/frontend-service.yaml
+          '''
+        }
+      }
+    }
+
+    stage('Verify Deployment') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl get pods
+          kubectl get svc
+          '''
+        }
+      }
+    }
+
+  }
+}
