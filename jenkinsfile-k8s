@@ -12,48 +12,11 @@ pipeline {
       }
     }
 
-    stage('Check Cluster Access') {
+    stage('Deploy Kubecoin App') {
       steps {
         container('kubectl') {
           sh '''
-          kubectl get nodes
-          kubectl get pods
-          '''
-        }
-      }
-    }
-
-    stage('Deploy Database') {
-      steps {
-        container('kubectl') {
-          sh '''
-          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-pv.yaml
-          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-pvc.yaml
-          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-init-configmap.yaml
-          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-headless-service.yaml
-          kubectl apply -f k8s/level-3-configmaps-secrets/postgres-statefulset.yaml
-          '''
-        }
-      }
-    }
-
-    stage('Deploy Backend') {
-      steps {
-        container('kubectl') {
-          sh '''
-          kubectl apply -f k8s/level-3-configmaps-secrets/backend-deployment.yaml
-          kubectl apply -f k8s/level-3-configmaps-secrets/backend-service.yaml
-          '''
-        }
-      }
-    }
-
-    stage('Deploy Frontend') {
-      steps {
-        container('kubectl') {
-          sh '''
-          kubectl apply -f k8s/level-3-configmaps-secrets/frontend-deployment.yaml
-          kubectl apply -f k8s/level-3-configmaps-secrets/frontend-service.yaml
+          kubectl apply -f k8s/level-3-configmaps-secrets/ -n jenkins
           '''
         }
       }
@@ -63,8 +26,8 @@ pipeline {
       steps {
         container('kubectl') {
           sh '''
-          kubectl get pods
-          kubectl get svc
+          kubectl get pods -n jenkins
+          kubectl get svc -n jenkins
           '''
         }
       }
