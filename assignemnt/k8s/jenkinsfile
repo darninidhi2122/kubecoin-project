@@ -11,6 +11,15 @@ pipeline {
       }
     }
 
+    stage('Deploy Kubernetes Resources') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl apply -f "assignment/k8s/all yamls"
+          '''
+        }
+      }
+    }
     stage('Verify Kubernetes Access') {
       steps {
         container('kubectl') {
@@ -26,8 +35,8 @@ pipeline {
       steps {
         container('kubectl') {
           sh '''
-          kubectl apply -f assignemnt/k8s/deployment.yaml
-          kubectl apply -f assignemnt/k8s/service.yaml
+          kubectl apply -f assignment/k8s/deployment.yaml
+          kubectl apply -f assignment/k8s/service.yaml
           '''
         }
       }
