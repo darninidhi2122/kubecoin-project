@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubecoin-app
+  namespace: jenkins
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kubecoin
+  template:
+    metadata:
+      labels:
+        app: kubecoin
+    spec:
+      containers:
+      - name: kubecoin
+        image: nginx:latest
+        ports:
+        - containerPort: 80

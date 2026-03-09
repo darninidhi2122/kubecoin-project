@@ -1,0 +1,49 @@
+pipeline {
+  agent {
+    label 'k8s-agent'
+  }
+
+  stages {
+
+    stage('Checkout Code') {
+      steps {
+        git 'https://github.com/darninidhi2122/kubecoin-project.git'
+      }
+    }
+
+    stage('Verify Kubernetes Access') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl get nodes
+          kubectl get pods -n jenkins
+          '''
+        }
+      }
+    }
+
+    stage('Deploy Application') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          '''
+        }
+      }
+    }
+
+    stage('Verify Deployment') {
+      steps {
+        container('kubectl') {
+          sh '''
+          kubectl get pods -n jenkins
+          kubectl get svc -n jenkins
+          kubectl get deployment -n jenkins
+          '''
+        }
+      }
+    }
+
+  }
+}
