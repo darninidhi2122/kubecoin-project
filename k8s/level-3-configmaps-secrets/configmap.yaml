@@ -12,4 +12,4 @@ data:
   DB_NAME: "kubecoin"
   
   # Frontend configuration
-  BACKEND_URL: "http://backend-service.default.svc.cluster.local:5000"
+  BACKEND_URL: "http://backend-service.jenkins.svc.cluster.local:5000"
