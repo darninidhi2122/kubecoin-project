@@ -22,6 +22,14 @@ pipeline {
       }
     }
 
+    stage('Restart Frontend') {
+     steps {
+       container('kubectl') {
+         sh 'kubectl rollout restart deployment frontend -n jenkins'
+        }
+      }
+    }
+
     stage('Verify Deployment') {
       steps {
         container('kubectl') {
