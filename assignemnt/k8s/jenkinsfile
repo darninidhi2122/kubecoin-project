@@ -11,32 +11,23 @@ pipeline {
       }
     }
 
-    stage('Deploy Kubernetes Resources') {
+    stage('Check Files') {
       steps {
         container('kubectl') {
           sh '''
-          kubectl apply -f "assignment/k8s/all yamls"
-          '''
-        }
-      }
-    }
-    stage('Verify Kubernetes Access') {
-      steps {
-        container('kubectl') {
-          sh '''
-          kubectl get nodes
-          kubectl get pods -n jenkins
+          echo "Listing repository files"
+          ls -R
           '''
         }
       }
     }
 
-    stage('Deploy Application') {
+    stage('Deploy Kubernetes Resources') {
       steps {
         container('kubectl') {
           sh '''
-          kubectl apply -f assignment/k8s/deployment.yaml
-          kubectl apply -f assignment/k8s/service.yaml
+          kubectl apply -f "assignment/k8s/deployment.yaml"
+          kubectl apply -f  "assignemnt/k8s/service.yaml"
           '''
         }
       }
@@ -48,7 +39,6 @@ pipeline {
           sh '''
           kubectl get pods -n jenkins
           kubectl get svc -n jenkins
-          kubectl get deployment -n jenkins
           '''
         }
       }
