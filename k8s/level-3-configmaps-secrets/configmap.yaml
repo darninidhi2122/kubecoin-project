@@ -8,7 +8,7 @@ metadata:
 data:
   # Database configuration (non-sensitive)
   POSTGRES_DB: "kubecoin"
-  DB_HOST: "postgres-headless"
+  DB_HOST: "postgres-headless.jenkins.svc.cluster.local"
   DB_NAME: "kubecoin"
   
   # Frontend configuration
