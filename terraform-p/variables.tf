@@ -1,5 +1,5 @@
 variable "region" {
-  default = "ap-south-1"
+  default = "us-east-1"
 }
 
 variable "control_plane_instance_type" {
@@ -7,7 +7,7 @@ variable "control_plane_instance_type" {
 }
 
 variable "worker_instance_type" {
-  default = "t2.small"
+  default = "t3.small"
 }
 
 variable "key_name" {
