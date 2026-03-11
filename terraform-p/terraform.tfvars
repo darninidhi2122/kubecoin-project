@@ -1,7 +1,7 @@
-key_name = "nidhi-outlook(n.v).pem"
+key_name = "nidhi-outlook(n.v)"
 
 ami = "ami-0b6c6ebed2801a5cb"
 
 control_plane_instance_type = "c7i-flex.large"
 
-worker_instance_type = "t2.small"
+worker_instance_type = "t3.small"
