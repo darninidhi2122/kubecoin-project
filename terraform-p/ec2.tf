@@ -8,6 +8,7 @@ resource "aws_instance" "control_plane" {
 
   tags = {
     Name = "k8s-control-plane"
+    role = "control"
   }
 }
 
@@ -21,6 +22,7 @@ resource "aws_instance" "worker1" {
 
   tags = {
     Name = "k8s-worker-1"
+    role = "worker"
   }
 }
 
@@ -34,5 +36,7 @@ resource "aws_instance" "worker2" {
 
   tags = {
     Name = "k8s-worker-2"
+    role = "worker"
   }
 }
+
